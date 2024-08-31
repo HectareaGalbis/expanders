@@ -19,8 +19,8 @@ Let's define 2 different expanders:
 
 @example{
 ;; We assume (use-package #:expanders)
-(defexpander plus-expander define-plus-expansion plus-expansion-p)
-(defexpander minus-expander define-minus-expansion minus-expansion-p)
+(defexpander plus-expander)
+(defexpander minus-expander)
 }
 
 Now we have two different expanders. The function @fref[expanderp] can tell us if a symbol denotes an expander:
@@ -37,17 +37,31 @@ Now we have two different expanders. The function @fref[expanderp] can tell us i
 (expanderp 'minus-expander)
 }
 
-Now it is time to define the expansion of @code{op}.
+Now it is time to define the expansion @code{op} for each expander using @fref[defexpansion]:
 
 @example{
-(define-plus-expansion op (a b)
+(defexpansion plus-expander op (a b)
   `(+ ,a ,b))
 
-(define-minus-expansion op (a b)
+(defexpansion minus-expander op (a b)
   `(- ,a ,b))
 }
 
-We can expand a form using @fref[expand]:
+We can check if a symbol is an expansion for a given expander using @fref[expansionp]:
+
+@example{
+(expansionp 'plus-expander 'op)
+}
+
+@example{
+(expansionp 'plus-expander 'hey)
+}
+
+@example{
+(expansionp 'minus-expander 'op)
+}
+
+We can expand a form using @fref[expand]. Note that the form must be a list starting with the name of an expansion:
 
 @example{
 (expand 'plus-expander '(op 3 (+ 5 6)))
@@ -62,7 +76,7 @@ Finally, let's define the macros @code{plus-macro} and @code{minus-macro}:
 @example{
 (defmacro plus-macro (form)
   (if (and (consp form)
-           (plus-expansion-p (car form)))
+           (expansionp 'plus-expander (car form)))
       (expand 'plus-expander form)
       form))
 }
@@ -70,7 +84,7 @@ Finally, let's define the macros @code{plus-macro} and @code{minus-macro}:
 @example{
 (defmacro minus-macro (form)
   (if (and (consp form)
-           (minus-expansion-p (car form)))
+           (expansionp 'minus-expander (car form)))
       (expand 'minus-expander form)
       form))
 }

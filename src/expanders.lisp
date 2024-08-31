@@ -7,20 +7,6 @@
   docstring
   func)
 
-(defun expanderp (sym)
-  "Check if a symbol denotes an expander."
-  (check-type sym symbol)
-  (and (get sym +expander-prop+) t))
-
-(defun expander-has-symbol-p (expander sym)
-  (check-type expander symbol)
-  (assert (expanderp expander) (expander) "~s is not a valid expander." expander)
-  (check-type sym symbol)
-  (let* ((default (gensym "DEFAULT"))
-         (value (get sym (get expander +expander-prop+) default)))
-    (not (eq value default))))
-
-
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun extract-docstring (body)
     "Returns the docstring and the body without that docstring."
@@ -32,59 +18,66 @@
           else
             do (return-from extract-docstring (values nil (append declarations (list expr) rest-body))))))
 
-(defmacro defexpander (sym definer predicate)
-  "Defines an expander represented by the symbol SYM. Defines also a definer and a predicate.
-The DEFINER will be like DEFMACRO. It receives a name and a destructuring-lambda-list. The definition
-must return the expansion of the provided name.
-The PREDICATE will receive a symbol adn will return true if the symbol was used to define an expansion with
-the DEFINER."
+(defmacro defexpander (sym)
+  "Defines an expander represented by the symbol SYM."
   (check-type sym symbol)
-  (check-type definer symbol)
-  (check-type predicate symbol)
-  (with-gensyms (def-name def-args def-body docstring sym-obj doc-type actual-body pred-sym func expander-info
-                  pre-args)
-    `(progn
+  (with-gensyms (docstring sym-obj doc-type)
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
        (setf (get ',sym +expander-prop+) (gensym ,(symbol-name sym)))
 
        (defmethod (setf documentation) (,docstring ,sym-obj (,doc-type (eql ',sym)))
          (declare (ignore ,doc-type))
-         (print ,sym-obj)
-         (print (get ',sym +expander-prop+))
-         (print (get ,sym-obj (get ',sym +expander-prop+)))
          (setf (expander-info-docstring (get ,sym-obj (get ',sym +expander-prop+))) ,docstring))
 
        (defmethod documentation (,sym-obj (,doc-type (eql ',sym)))
          (declare (ignore ,doc-type))
          (expander-info-docstring (get ,sym-obj (get ',sym +expander-prop+))))
 
-       (defmacro ,definer (,def-name (&rest ,def-args) &body ,def-body)
-         (multiple-value-bind (,docstring ,actual-body) (extract-docstring ,def-body)
-           (with-gensyms (,func ,expander-info ,pre-args)
-             `(eval-when (:compile-toplevel :load-toplevel :execute)
-                (flet ((,,func (&rest ,,pre-args)
-                         (destructuring-bind (,@,def-args) ,,pre-args
-                           ,@,actual-body)))
-                  (let ((,,expander-info (make-expander-info :func #',,func)))
-                    (setf (get ',,def-name (get ',',sym +expander-prop+)) ,,expander-info)
-                    ,@(when ,docstring
-                        `((setf (documentation ',,def-name ',',sym) ,,docstring)))
-                    ',,def-name))))))
-       
-       (defun ,predicate (,pred-sym)
-         (expander-has-symbol-p ',sym ,pred-sym))
-
        ',sym)))
 
+(defun expanderp (sym)
+  "Check if a symbol denotes an expander."
+  (check-type sym symbol)
+  (and (get sym +expander-prop+) t))
+
+(defmacro defexpansion (expander name (&rest args) &body body)
+  "Defines an expansion for the expander EXPANDER. NAME must be a symbol denoting
+the new expansion. ARGS is a destructuring lambda list. This must return the desired
+expansion for NAME and EXPANDER."
+  (assert (expanderp expander))
+  (check-type name symbol)
+  (multiple-value-bind (docstring actual-body) (extract-docstring body)
+    (with-gensyms (func-sym expander-info-sym pre-args-sym)
+      `(eval-when (:compile-toplevel :load-toplevel :execute)
+         (flet ((,func-sym (&rest ,pre-args-sym)
+                  (destructuring-bind (,@args) ,pre-args-sym
+                    ,@actual-body)))
+           (let ((,expander-info-sym (make-expander-info :func #',func-sym)))
+             (setf (get ',name (get ',expander +expander-prop+)) ,expander-info-sym)
+             ,@(when docstring
+                 `((setf (documentation ',name ',expander) ,docstring)))
+             ',name))))))
+
+(defun expansionp (expander expansion)
+  "Checks if EXPANSION is a valid expansion for the expander EXPANDER.
+EXPANDER must be a valid expander."
+  (check-type expander symbol)
+  (assert (expanderp expander) (expander) "~s is not a valid expander." expander)
+  (check-type expansion symbol)
+  (let* ((default (gensym "DEFAULT"))
+         (value (get expansion (get expander +expander-prop+) default)))
+    (not (eq value default))))
 
 
 (defun expand (expander form)
-  "Expands a form using an expander."
+  "Expands a form using an expander. FORM must be a list starting with a valid
+expansion symbol for the expander EXPANDER."
   (assert (expanderp expander) (expander) "~s is not a valid expander." expander)
   (check-type form cons)
-  (let ((sym (car form)))
-    (check-type sym symbol)
-    (assert (expander-has-symbol-p expander sym) (sym)
-            "The form ~s does not belong to the expander ~s." sym expander)
+  (let ((expansion (car form)))
+    (check-type expansion symbol)
+    (assert (expansionp expander expansion) (expansion)
+            "The symbol ~s is not a valid expansion for the expander ~s." expansion expander)
     (let* ((args (cdr form))
-           (expander-info (get sym (get expander +expander-prop+))))
+           (expander-info (get expansion (get expander +expander-prop+))))
       (apply (expander-info-func expander-info) args))))
