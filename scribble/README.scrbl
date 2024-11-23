@@ -41,9 +41,11 @@ Now it is time to define the expansion @code{op} for each expander using @fref[d
 
 @example{
 (defexpansion plus-expander op (a b)
+  "OP to + expansion"
   `(+ ,a ,b))
 
 (defexpansion minus-expander op (a b)
+  "OP to - expansion"
   `(- ,a ,b))
 }
 
@@ -59,6 +61,19 @@ We can check if a symbol is an expansion for a given expander using @fref[expans
 
 @example{
 (expansionp 'minus-expander 'op)
+}
+
+Also, we can retrieve or set the docstring using @code{documentation}:
+
+@example{
+(documentation 'op 'plus-expander)
+}
+
+@example{
+(let ((old-docstring (documentation 'op 'minus-expander)))
+  (setf (documentation 'op 'minus-expander) "Another docstring")
+  (let ((new-docstring (documentation 'op 'minus-expander)))
+    (format t "Old: ~s~%New: ~s" old-docstring new-docstring)))
 }
 
 We can expand a form using @fref[expand]. Note that the form must be a list starting with the name of an expansion:

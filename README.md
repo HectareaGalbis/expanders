@@ -1,17 +1,17 @@
 
 
-<a id="header-adp-github-headertag423"></a>
+<a id="header-adp-github-headertag453"></a>
 # Expanders
 
 Welcome to Expanders\!\! \:D
 
-* [Expanders](/README.md#header-adp-github-headertag423)
-  * [What is this\?](/README.md#header-adp-github-headertag424)
-  * [Why\?](/README.md#header-adp-github-headertag460)
-  * [Reference](/README.md#header-adp-github-headertag461)
+* [Expanders](/README.md#header-adp-github-headertag453)
+  * [What is this\?](/README.md#header-adp-github-headertag454)
+  * [Why\?](/README.md#header-adp-github-headertag500)
+  * [Reference](/README.md#header-adp-github-headertag501)
 
 
-<a id="header-adp-github-headertag424"></a>
+<a id="header-adp-github-headertag454"></a>
 ## What is this\?
 
 The project lets you define ``` expanders ```\. An ``` expander ``` is like a namespace for forms that should transform in a specific way\.
@@ -56,9 +56,11 @@ Now it is time to define the expansion ``` op ``` for each expander using [exp\:
 
 `````common-lisp
 (defexpansion plus-expander op (a b)
+  "OP to + expansion"
   `(+ ,a ,b))
 
 (defexpansion minus-expander op (a b)
+  "OP to - expansion"
   `(- ,a ,b))
 `````
 `````common-lisp
@@ -86,6 +88,29 @@ nil
 `````
 `````common-lisp
 t
+`````
+
+Also\, we can retrieve or set the docstring using ``` documentation ```\:
+
+`````common-lisp
+(documentation 'op 'plus-expander)
+`````
+`````common-lisp
+"OP to + expansion"
+`````
+
+`````common-lisp
+(let ((old-docstring (documentation 'op 'minus-expander)))
+  (setf (documentation 'op 'minus-expander) "Another docstring")
+  (let ((new-docstring (documentation 'op 'minus-expander)))
+    (format t "Old: ~s~%New: ~s" old-docstring new-docstring)))
+`````
+`````text
+Old: "OP to - expansion"
+New: "Another docstring"
+`````
+`````common-lisp
+nil
 `````
 
 We can expand a form using [exp\:expand](/README.md#function-expanders-expand)\. Note that the form must be a list starting with the name of an expansion\:
@@ -144,14 +169,14 @@ If we use the form ``` (op 5 4) ``` we will see that each macro will expand to `
 1
 `````
 
-<a id="header-adp-github-headertag460"></a>
+<a id="header-adp-github-headertag500"></a>
 ## Why\?
 
 * **It is common**\: I have noticed that having expanders is a relatively common pattern in macros\. The best example is ``` setf ``` and its ``` setf-expanders ```\. Another project using expanders is [CFFI](https://github.com/cffi/cffi) and its type parsers\. In my own projects I ended up using the same techniques \([Clith](https://github.com/Hectarea1996/clith)\)\.
 * **Duality of syntax**\: We can increase the duality of syntax using expanders\. The best example is ``` setf ```\. Thanks to ``` setf ``` we don\'t need names for setters because they come for free with the getter\.
 
 
-<a id="header-adp-github-headertag461"></a>
+<a id="header-adp-github-headertag501"></a>
 ## Reference
 
 <a id="function-expanders-defexpander"></a>
