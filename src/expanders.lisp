@@ -70,14 +70,16 @@ EXPANDER must be a valid expander."
 
 
 (defun expand (expander form)
-  "Expands a form using an expander. FORM must be a list starting with a valid
-expansion symbol for the expander EXPANDER."
+  "Expands a form using an expander. FORM must be a symbol or a list denoting a valid
+expansion for the expander EXPANDER. If FORM is a symbol it will be interpreted as if it
+were a list with the symbol as first element."
   (assert (expanderp expander) (expander) "~s is not a valid expander." expander)
-  (check-type form cons)
-  (let ((expansion (car form)))
+  (check-type form (or cons symbol) "a symbol or a list")
+  (let* ((canon-form (ensure-list form))
+         (expansion (car canon-form)))
     (check-type expansion symbol)
     (assert (expansionp expander expansion) (expansion)
             "The symbol ~s is not a valid expansion for the expander ~s." expansion expander)
-    (let* ((args (cdr form))
+    (let* ((args (cdr canon-form))
            (expander-info (get expansion (get expander +expander-prop+))))
       (apply (expander-info-func expander-info) args))))
