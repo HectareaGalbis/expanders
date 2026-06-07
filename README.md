@@ -1,22 +1,21 @@
 
 
-<a id="header-adp-github-headertag453"></a>
+<a id="TITLE:EXPANDERS-DOCS:TAG5"></a>
 # Expanders
 
 Welcome to Expanders\!\! \:D
 
-* [Expanders](/README.md#header-adp-github-headertag453)
-  * [What is this\?](/README.md#header-adp-github-headertag454)
-  * [Why\?](/README.md#header-adp-github-headertag500)
-  * [Reference](/README.md#header-adp-github-headertag501)
+* [What is this\?](/README.md#TITLE:EXPANDERS-DOCS:TAG6)
+* [Why\?](/README.md#TITLE:EXPANDERS-DOCS:TAG7)
+* [Reference](/README.md#TITLE:EXPANDERS-DOCS:TAG8)
 
 
-<a id="header-adp-github-headertag454"></a>
+<a id="TITLE:EXPANDERS-DOCS:TAG6"></a>
 ## What is this\?
 
-The project lets you define ``` expanders ```\. An ``` expander ``` is like a namespace for forms that should transform in a specific way\.
+This project lets you define ```expanders```\. An ```expander``` is like a namespace for forms that can be expanded by a macro\.
 
-It easier to understand with an example\. Suppose we have the following form ``` (op (+ 3 4) b) ```\. This form will be used in two different macros named ``` plus-macro ``` and ``` minus-macro ```\. Each macro receives a form\. That form could start with ``` op ```\. In that case\, ``` op ``` is substituted by ``` + ``` or ``` - ``` respectively\.
+It easier to understand with an example\. Suppose we have the following form ```(op (+ 3 4) b)```\. This form will be used in two different macros named ```plus-macro``` and ```minus-macro```\. Each macro receives a form\. That form could start with ```op```\. In that case\, ```op``` is substituted by ```+``` or ```-``` respectively\.
 
 Let\'s define 2 different expanders\:
 
@@ -26,33 +25,37 @@ Let\'s define 2 different expanders\:
 (defexpander minus-expander)
 `````
 `````common-lisp
-minus-expander
+;; Returns
+MINUS-EXPANDER
 `````
 
-Now we have two different expanders\. The function [exp\:expanderp](/README.md#function-expanders-expanderp) can tell us if a symbol denotes an expander\:
+Now we have two different expanders\. The function [exp\:expanderp](/README.md#FUNCTION:EXPANDERS:EXPANDERP) can tell us if a symbol denotes an expander\:
 
 `````common-lisp
 (expanderp 'plus-expander)
 `````
 `````common-lisp
-t
+;; Returns
+T
 `````
 
 `````common-lisp
 (expanderp 'hey)
 `````
 `````common-lisp
-nil
+;; Returns
+NIL
 `````
 
 `````common-lisp
 (expanderp 'minus-expander)
 `````
 `````common-lisp
-t
+;; Returns
+T
 `````
 
-Now it is time to define the expansion ``` op ``` for each expander using [exp\:defexpansion](/README.md#function-expanders-defexpansion)\:
+Now it is time to define the expansion ```op``` for each expander using [exp\:defexpansion](/README.md#FUNCTION:EXPANDERS:DEFEXPANSION)\:
 
 `````common-lisp
 (defexpansion plus-expander op (a b)
@@ -64,38 +67,43 @@ Now it is time to define the expansion ``` op ``` for each expander using [exp\:
   `(- ,a ,b))
 `````
 `````common-lisp
-op
+;; Returns
+OP
 `````
 
-We can check if a symbol is an expansion for a given expander using [exp\:expansionp](/README.md#function-expanders-expansionp)\:
+We can check if a symbol is an expansion for a given expander using [exp\:expansionp](/README.md#FUNCTION:EXPANDERS:EXPANSIONP)\:
 
 `````common-lisp
 (expansionp 'plus-expander 'op)
 `````
 `````common-lisp
-t
+;; Returns
+T
 `````
 
 `````common-lisp
 (expansionp 'plus-expander 'hey)
 `````
 `````common-lisp
-nil
+;; Returns
+NIL
 `````
 
 `````common-lisp
 (expansionp 'minus-expander 'op)
 `````
 `````common-lisp
-t
+;; Returns
+T
 `````
 
-Also\, we can retrieve or set the docstring using ``` documentation ```\:
+Also\, we can retrieve or set the docstring using ```documentation```\:
 
 `````common-lisp
 (documentation 'op 'plus-expander)
 `````
 `````common-lisp
+;; Returns
 "OP to + expansion"
 `````
 
@@ -106,59 +114,86 @@ Also\, we can retrieve or set the docstring using ``` documentation ```\:
     (format t "Old: ~s~%New: ~s" old-docstring new-docstring)))
 `````
 `````text
+;; Output
 Old: "OP to - expansion"
 New: "Another docstring"
 `````
 `````common-lisp
-nil
+;; Returns
+NIL
 `````
 
-We can expand a form using [exp\:expand](/README.md#function-expanders-expand)\. Note that the form must be a list starting with the name of an expansion\:
+We can expand an expansion using [exp\:expand](/README.md#FUNCTION:EXPANDERS:EXPAND)\. Note that the expansion must be a symbol or a list denoting an expansion\:
 
 `````common-lisp
-(expand 'plus-expander '(op 3 (+ 5 6)))
+(expand 'plus-expander 'op 3 '(+ 5 6))
 `````
 `````common-lisp
+;; Returns
 (+ 3 (+ 5 6))
 `````
 
 `````common-lisp
-(expand 'minus-expander '(op 3 (+ 5 6)))
+(expand 'minus-expander 'op 3 '(+ 5 6))
 `````
 `````common-lisp
+;; Returns
 (- 3 (+ 5 6))
 `````
 
-Finally\, let\'s define the macros ``` plus-macro ``` and ``` minus-macro ```\:
+But usually is more convenient to use the [exp\:expand\*](/README.md#FUNCTION:EXPANDERS:EXPAND*) function\:
+
+`````common-lisp
+(expand* 'plus-expander 'op '(3 (+ 5 6)))
+`````
+`````common-lisp
+;; Returns
+(+ 3 (+ 5 6))
+`````
+
+or\:
+
+`````common-lisp
+(expand* 'plus-expander '(op 3 (+ 5 6)))
+`````
+`````common-lisp
+;; Returns
+(+ 3 (+ 5 6))
+`````
+
+Finally\, let\'s define the macros ```plus-macro``` and ```minus-macro```\:
 
 `````common-lisp
 (defmacro plus-macro (form)
   (if (and (consp form)
            (expansionp 'plus-expander (car form)))
-      (expand 'plus-expander form)
+      (expand* 'plus-expander form)
       form))
 `````
 `````common-lisp
-plus-macro
+;; Returns
+PLUS-MACRO
 `````
 
 `````common-lisp
 (defmacro minus-macro (form)
   (if (and (consp form)
            (expansionp 'minus-expander (car form)))
-      (expand 'minus-expander form)
+      (expand* 'minus-expander form)
       form))
 `````
 `````common-lisp
-minus-macro
+;; Returns
+MINUS-MACRO
 `````
 
-If we use the form ``` (op 5 4) ``` we will see that each macro will expand to ``` (+ 5 4) ``` or ``` (- 5 4) ``` respectively\.
+If we use the form ```(op 5 4)``` we will see that each macro will expand to ```(+ 5 4)``` or ```(- 5 4)``` respectively\.
 
 `````common-lisp
 (plus-macro (op 5 4))
 `````
 `````common-lisp
+;; Returns
 9
 `````
 
@@ -166,28 +201,31 @@ If we use the form ``` (op 5 4) ``` we will see that each macro will expand to `
 (minus-macro (op 5 4))
 `````
 `````common-lisp
+;; Returns
 1
 `````
 
-<a id="header-adp-github-headertag500"></a>
+<a id="TITLE:EXPANDERS-DOCS:TAG7"></a>
 ## Why\?
 
-* **It is common**\: I have noticed that having expanders is a relatively common pattern in macros\. The best example is ``` setf ``` and its ``` setf-expanders ```\. Another project using expanders is [CFFI](https://github.com/cffi/cffi) and its type parsers\. In my own projects I ended up using the same techniques \([Clith](https://github.com/Hectarea1996/clith)\)\.
-* **Duality of syntax**\: We can increase the duality of syntax using expanders\. The best example is ``` setf ```\. Thanks to ``` setf ``` we don\'t need names for setters because they come for free with the getter\.
+* **It is common**\: I have noticed that having expanders is a relatively common pattern in macros\. The best example is ```setf``` and its ```setf-expanders```\. Another project using expanders is [CFFI](https://github.com/cffi/cffi) and its type parsers\. In my own projects I ended up using the same techniques \([Clith](https://github.com/Hectarea1996/clith)\)\.
+* **Duality of syntax**\: We can increase the duality of syntax using expanders\. The best example is ```setf```\. Thanks to ```setf``` we don\'t need names for setters because they come for free from getters\.
 
 
-<a id="header-adp-github-headertag501"></a>
+<a id="TITLE:EXPANDERS-DOCS:TAG8"></a>
 ## Reference
 
-<a id="function-expanders-defexpander"></a>
-#### Macro: exp:defexpander (sym)
+<a id="FUNCTION:EXPANDERS:DEFEXPANDER"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG13"></a>
+#### Macro: exp\:defexpander \(sym\)
 
 `````text
 Defines an expander represented by the symbol SYM.
 `````
 
-<a id="function-expanders-defexpansion"></a>
-#### Macro: exp:defexpansion (expander name (&rest args) &body body)
+<a id="FUNCTION:EXPANDERS:DEFEXPANSION"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG11"></a>
+#### Macro: exp\:defexpansion \(expander name \(\&rest args\) \&body body\)
 
 `````text
 Defines an expansion for the expander EXPANDER. NAME must be a symbol denoting
@@ -195,23 +233,38 @@ the new expansion. ARGS is a destructuring lambda list. This must return the des
 expansion for NAME and EXPANDER.
 `````
 
-<a id="function-expanders-expand"></a>
-#### Function: exp:expand (expander form)
+<a id="FUNCTION:EXPANDERS:EXPAND"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG10"></a>
+#### Function: exp\:expand \(expander expansion \&rest args\)
 
 `````text
-Expands a form using an expander. FORM must be a list starting with a valid
-expansion symbol for the expander EXPANDER.
+Expands an expansion.
 `````
 
-<a id="function-expanders-expanderp"></a>
-#### Function: exp:expanderp (sym)
+<a id="FUNCTION:EXPANDERS:EXPAND*"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG9"></a>
+#### Function: exp\:expand\* \(expander \&rest args\)
+
+`````text
+Expands an expansion. The last argument can be a symbol denoting the expansion (no arguments),
+or a list with the last arguments to use in the expansion.
+  Examples:
+    (expand* 'my-expander 'my-expansion)   ; No arguments
+    (expand* 'my-expander (list 'my-expansion arg1 arg2 ...))
+    (expand* 'my-expander 'my-expansion arg1 arg2 (list arg3 arg4 ...))
+`````
+
+<a id="FUNCTION:EXPANDERS:EXPANDERP"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG14"></a>
+#### Function: exp\:expanderp \(sym\)
 
 `````text
 Check if a symbol denotes an expander.
 `````
 
-<a id="function-expanders-expansionp"></a>
-#### Function: exp:expansionp (expander expansion)
+<a id="FUNCTION:EXPANDERS:EXPANSIONP"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG12"></a>
+#### Function: exp\:expansionp \(expander expansion\)
 
 `````text
 Checks if EXPANSION is a valid expansion for the expander EXPANDER.

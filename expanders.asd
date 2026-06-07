@@ -14,7 +14,7 @@
 ;;   :license "MIT"
 ;;   :depends-on ("expanders")
 ;;   :defsystem-depends-on ("adp-github")
-;;   :build-operation "adp-github-op"
+;;   :class :adp-github
 ;;   :components ((:module "scribble"
 ;;                 :components ((:file "package")
 ;;                              (:scribble "README")))))

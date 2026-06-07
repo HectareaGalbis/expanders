@@ -1,17 +1,17 @@
 
 (in-package #:expanders-docs)
 
-@select-output-file["/README.md"]
+@output-file["/README.md"]
 
-@header{Expanders}
+@title[:toc nil]{Expanders}
 
 Welcome to Expanders!! :D
 
-@table-of-contents{}
+@table-of-contents[]
 
-@subheader{What is this?}
+@subtitle{What is this?}
 
-The project lets you define @code{expanders}. An @code{expander} is like a namespace for forms that should transform in a specific way.
+This project lets you define @code{expanders}. An @code{expander} is like a namespace for forms that can be expanded by a macro.
 
 It easier to understand with an example. Suppose we have the following form @code{(op (+ 3 4) b)}. This form will be used in two different macros named @code{plus-macro} and @code{minus-macro}. Each macro receives a form. That form could start with @code{op}. In that case, @code{op} is substituted by @code{+} or @code{-} respectively.
 
@@ -76,14 +76,26 @@ Also, we can retrieve or set the docstring using @code{documentation}:
     (format t "Old: ~s~%New: ~s" old-docstring new-docstring)))
 }
 
-We can expand a form using @fref[expand]. Note that the form must be a list starting with the name of an expansion:
+We can expand an expansion using @fref[expand]. Note that the expansion must be a symbol or a list denoting an expansion:
 
 @example{
-(expand 'plus-expander '(op 3 (+ 5 6)))
+(expand 'plus-expander 'op 3 '(+ 5 6))
 }
 
 @example{
-(expand 'minus-expander '(op 3 (+ 5 6)))
+(expand 'minus-expander 'op 3 '(+ 5 6))
+}
+
+But usually is more convenient to use the @fref[expand*] function:
+
+@example{
+(expand* 'plus-expander 'op '(3 (+ 5 6)))
+}
+
+or:
+
+@example{
+(expand* 'plus-expander '(op 3 (+ 5 6)))
 }
 
 Finally, let's define the macros @code{plus-macro} and @code{minus-macro}:
@@ -92,7 +104,7 @@ Finally, let's define the macros @code{plus-macro} and @code{minus-macro}:
 (defmacro plus-macro (form)
   (if (and (consp form)
            (expansionp 'plus-expander (car form)))
-      (expand 'plus-expander form)
+      (expand* 'plus-expander form)
       form))
 }
 
@@ -100,7 +112,7 @@ Finally, let's define the macros @code{plus-macro} and @code{minus-macro}:
 (defmacro minus-macro (form)
   (if (and (consp form)
            (expansionp 'minus-expander (car form)))
-      (expand 'minus-expander form)
+      (expand* 'minus-expander form)
       form))
 }
 
@@ -114,16 +126,16 @@ If we use the form @code{(op 5 4)} we will see that each macro will expand to @c
 (minus-macro (op 5 4))
 }
 
-@subheader{Why?}
+@subtitle{Why?}
 
 @itemize[
 
 @item{@bold{It is common}: I have noticed that having expanders is a relatively common pattern in macros. The best example is @code{setf} and its @code{setf-expanders}. Another project using expanders is @link[:address "https://github.com/cffi/cffi"]{CFFI} and its type parsers. In my own projects I ended up using the same techniques (@link[:address "https://github.com/Hectarea1996/clith"]{Clith}).}
 
-@item{@bold{Duality of syntax}: We can increase the duality of syntax using expanders. The best example is @code{setf}. Thanks to @code{setf} we don't need names for setters because they come for free with the getter.}
+@item{@bold{Duality of syntax}: We can increase the duality of syntax using expanders. The best example is @code{setf}. Thanks to @code{setf} we don't need names for setters because they come for free from getters.}
 
 ]
 
-@subheader{Reference}
+@subtitle{Reference}
 
 @function-glossary[#:expanders]

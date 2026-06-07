@@ -69,17 +69,20 @@ EXPANDER must be a valid expander."
     (not (eq value default))))
 
 
-(defun expand (expander form)
-  "Expands a form using an expander. FORM must be a symbol or a list denoting a valid
-expansion for the expander EXPANDER. If FORM is a symbol it will be interpreted as if it
-were a list with the symbol as first element."
+(defun expand (expander expansion &rest args)
+  "Expands an expansion."
   (assert (expanderp expander) (expander) "~s is not a valid expander." expander)
-  (check-type form (or cons symbol) "a symbol or a list")
-  (let* ((canon-form (ensure-list form))
-         (expansion (car canon-form)))
-    (check-type expansion symbol)
-    (assert (expansionp expander expansion) (expansion)
-            "The symbol ~s is not a valid expansion for the expander ~s." expansion expander)
-    (let* ((args (cdr canon-form))
-           (expander-info (get expansion (get expander +expander-prop+))))
-      (apply (expander-info-func expander-info) args))))
+  (assert (expansionp expander expansion) (expansion) "~s is not a valid expansion for the expader ~s" expansion expander)
+  (let* ((expander-info (get expansion (get expander +expander-prop+))))
+    (apply (expander-info-func expander-info) args)))
+
+(defun expand* (expander &rest args)
+  "Expands an expansion. The last argument can be a symbol denoting the expansion (no arguments),
+or a list with the last arguments to use in the expansion.
+  Examples:
+    (expand* 'my-expander 'my-expansion)   ; No arguments
+    (expand* 'my-expander (list 'my-expansion arg1 arg2 ...))
+    (expand* 'my-expander 'my-expansion arg1 arg2 (list arg3 arg4 ...))"
+  (when (null (cdr args))
+    (setf args (cons (ensure-list (car args)) (cdr args))))
+  (apply #'expand expander (apply #'list* args)))
