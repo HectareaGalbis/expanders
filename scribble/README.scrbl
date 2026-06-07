@@ -76,7 +76,7 @@ Also, we can retrieve or set the docstring using @code{documentation}:
     (format t "Old: ~s~%New: ~s" old-docstring new-docstring)))
 }
 
-We can expand an expansion using @fref[expand]. Note that the expansion must be a symbol or a list denoting an expansion:
+We can expand an expansion using @fref[expand]:
 
 @example{
 (expand 'plus-expander 'op 3 '(+ 5 6))

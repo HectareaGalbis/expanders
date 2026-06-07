@@ -1,16 +1,16 @@
 
 
-<a id="TITLE:EXPANDERS-DOCS:TAG5"></a>
+<a id="TITLE:EXPANDERS-DOCS:TAG15"></a>
 # Expanders
 
 Welcome to Expanders\!\! \:D
 
-* [What is this\?](/README.md#TITLE:EXPANDERS-DOCS:TAG6)
-* [Why\?](/README.md#TITLE:EXPANDERS-DOCS:TAG7)
-* [Reference](/README.md#TITLE:EXPANDERS-DOCS:TAG8)
+* [What is this\?](/README.md#TITLE:EXPANDERS-DOCS:TAG16)
+* [Why\?](/README.md#TITLE:EXPANDERS-DOCS:TAG17)
+* [Reference](/README.md#TITLE:EXPANDERS-DOCS:TAG18)
 
 
-<a id="TITLE:EXPANDERS-DOCS:TAG6"></a>
+<a id="TITLE:EXPANDERS-DOCS:TAG16"></a>
 ## What is this\?
 
 This project lets you define ```expanders```\. An ```expander``` is like a namespace for forms that can be expanded by a macro\.
@@ -123,7 +123,7 @@ New: "Another docstring"
 NIL
 `````
 
-We can expand an expansion using [exp\:expand](/README.md#FUNCTION:EXPANDERS:EXPAND)\. Note that the expansion must be a symbol or a list denoting an expansion\:
+We can expand an expansion using [exp\:expand](/README.md#FUNCTION:EXPANDERS:EXPAND)\:
 
 `````common-lisp
 (expand 'plus-expander 'op 3 '(+ 5 6))
@@ -205,18 +205,18 @@ If we use the form ```(op 5 4)``` we will see that each macro will expand to ```
 1
 `````
 
-<a id="TITLE:EXPANDERS-DOCS:TAG7"></a>
+<a id="TITLE:EXPANDERS-DOCS:TAG17"></a>
 ## Why\?
 
 * **It is common**\: I have noticed that having expanders is a relatively common pattern in macros\. The best example is ```setf``` and its ```setf-expanders```\. Another project using expanders is [CFFI](https://github.com/cffi/cffi) and its type parsers\. In my own projects I ended up using the same techniques \([Clith](https://github.com/Hectarea1996/clith)\)\.
 * **Duality of syntax**\: We can increase the duality of syntax using expanders\. The best example is ```setf```\. Thanks to ```setf``` we don\'t need names for setters because they come for free from getters\.
 
 
-<a id="TITLE:EXPANDERS-DOCS:TAG8"></a>
+<a id="TITLE:EXPANDERS-DOCS:TAG18"></a>
 ## Reference
 
 <a id="FUNCTION:EXPANDERS:DEFEXPANDER"></a>
-<a id="FUNCTION:EXPANDERS-DOCS:TAG13"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG23"></a>
 #### Macro: exp\:defexpander \(sym\)
 
 `````text
@@ -224,7 +224,7 @@ Defines an expander represented by the symbol SYM.
 `````
 
 <a id="FUNCTION:EXPANDERS:DEFEXPANSION"></a>
-<a id="FUNCTION:EXPANDERS-DOCS:TAG11"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG21"></a>
 #### Macro: exp\:defexpansion \(expander name \(\&rest args\) \&body body\)
 
 `````text
@@ -234,7 +234,7 @@ expansion for NAME and EXPANDER.
 `````
 
 <a id="FUNCTION:EXPANDERS:EXPAND"></a>
-<a id="FUNCTION:EXPANDERS-DOCS:TAG10"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG20"></a>
 #### Function: exp\:expand \(expander expansion \&rest args\)
 
 `````text
@@ -242,7 +242,7 @@ Expands an expansion.
 `````
 
 <a id="FUNCTION:EXPANDERS:EXPAND*"></a>
-<a id="FUNCTION:EXPANDERS-DOCS:TAG9"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG19"></a>
 #### Function: exp\:expand\* \(expander \&rest args\)
 
 `````text
@@ -255,7 +255,7 @@ or a list with the last arguments to use in the expansion.
 `````
 
 <a id="FUNCTION:EXPANDERS:EXPANDERP"></a>
-<a id="FUNCTION:EXPANDERS-DOCS:TAG14"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG24"></a>
 #### Function: exp\:expanderp \(sym\)
 
 `````text
@@ -263,7 +263,7 @@ Check if a symbol denotes an expander.
 `````
 
 <a id="FUNCTION:EXPANDERS:EXPANSIONP"></a>
-<a id="FUNCTION:EXPANDERS-DOCS:TAG12"></a>
+<a id="FUNCTION:EXPANDERS-DOCS:TAG22"></a>
 #### Function: exp\:expansionp \(expander expansion\)
 
 `````text
