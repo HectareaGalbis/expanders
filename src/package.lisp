@@ -1,5 +1,5 @@
 
 (defpackage #:expanders
-  (:use #:cl #:alexandria)
+  (:use #:cl #:alexandria #:vault)
   (:nicknames #:exp)
-  (:export #:defexpander #:expanderp #:defexpansion #:expansionp #:expand #:expand*))
+  (:export #:make-expander #:expanderp #:defexpansion #:expansionp #:expand))

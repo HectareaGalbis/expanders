@@ -13,28 +13,28 @@ Welcome to Expanders!! :D
 
 This project lets you define @code{expanders}. An @code{expander} is like a namespace for forms that can be expanded by a macro.
 
-It easier to understand with an example. Suppose we have the following form @code{(op (+ 3 4) b)}. This form will be used in two different macros named @code{plus-macro} and @code{minus-macro}. Each macro receives a form. That form could start with @code{op}. In that case, @code{op} is substituted by @code{+} or @code{-} respectively.
+It is easier to understand with an example. Suppose we have the following form @code{(op (+ 3 4) b)}. This form will be used in two different macros named @code{plus-macro} and @code{minus-macro}. Each macro receives a form. That form could start with @code{op}. In that case, @code{op} is substituted by @code{+} or @code{-} respectively.
 
 Let's define 2 different expanders:
 
 @example{
 ;; We assume (use-package #:expanders)
-(defexpander plus-expander)
-(defexpander minus-expander)
+(defvar plus-expander (make-expander))
+(defvar minus-expander (make-expander))
 }
 
 Now we have two different expanders. The function @fref[expanderp] can tell us if a symbol denotes an expander:
 
 @example{
-(expanderp 'plus-expander)
+(expanderp plus-expander)
 }
 
 @example{
-(expanderp 'hey)
+(expanderp 'another-thing)
 }
 
 @example{
-(expanderp 'minus-expander)
+(expanderp minus-expander)
 }
 
 Now it is time to define the expansion @code{op} for each expander using @fref[defexpansion]:
@@ -52,68 +52,50 @@ Now it is time to define the expansion @code{op} for each expander using @fref[d
 We can check if a symbol is an expansion for a given expander using @fref[expansionp]:
 
 @example{
-(expansionp 'plus-expander 'op)
+(expansionp plus-expander 'op)
 }
 
 @example{
-(expansionp 'plus-expander 'hey)
+(expansionp plus-expander 'hey)
 }
 
 @example{
-(expansionp 'minus-expander 'op)
+(expansionp minus-expander 'op)
 }
 
 Also, we can retrieve or set the docstring using @code{documentation}:
 
 @example{
-(documentation 'op 'plus-expander)
+(documentation 'op plus-expander)
 }
 
 @example{
-(let ((old-docstring (documentation 'op 'minus-expander)))
-  (setf (documentation 'op 'minus-expander) "Another docstring")
-  (let ((new-docstring (documentation 'op 'minus-expander)))
+(let ((old-docstring (documentation 'op minus-expander)))
+  (setf (documentation 'op minus-expander) "Another docstring")
+  (let ((new-docstring (documentation 'op minus-expander)))
     (format t "Old: ~s~%New: ~s" old-docstring new-docstring)))
 }
 
 We can expand an expansion using @fref[expand]:
 
 @example{
-(expand 'plus-expander 'op 3 '(+ 5 6))
+(expand plus-expander '(op 3 (+ 5 6)))
 }
 
 @example{
-(expand 'minus-expander 'op 3 '(+ 5 6))
-}
-
-But usually is more convenient to use the @fref[expand*] function:
-
-@example{
-(expand* 'plus-expander 'op '(3 (+ 5 6)))
-}
-
-or:
-
-@example{
-(expand* 'plus-expander '(op 3 (+ 5 6)))
+(expand minus-expander '(op 3 (+ 5 6)))
 }
 
 Finally, let's define the macros @code{plus-macro} and @code{minus-macro}:
 
 @example{
 (defmacro plus-macro (form)
-  (if (and (consp form)
-           (expansionp 'plus-expander (car form)))
-      (expand* 'plus-expander form)
-      form))
+  (expand plus-expander form))
 }
 
 @example{
 (defmacro minus-macro (form)
-  (if (and (consp form)
-           (expansionp 'minus-expander (car form)))
-      (expand* 'minus-expander form)
-      form))
+  (expand minus-expander form))
 }
 
 If we use the form @code{(op 5 4)} we will see that each macro will expand to @code{(+ 5 4)} or @code{(- 5 4)} respectively.

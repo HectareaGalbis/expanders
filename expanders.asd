@@ -3,7 +3,7 @@
   :author "Héctor Galbis Sanchis"
   :description "Tool for defining expanders."
   :license "MIT"
-  :depends-on ("alexandria")
+  :depends-on ("alexandria" "ecclesia" "vault")
   :components ((:module "src"
                 :components ((:file "package")
                              (:file "expanders")))))

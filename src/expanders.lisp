@@ -1,73 +1,79 @@
 
 (in-package #:expanders)
 
-(defconstant +expander-prop+ 'expander)
+(defun first-duplicate (list &key (test #'eql))
+  "Get the first duplicate of a list or NIL"
+  (let ((seen (make-hash-table :test test)))
+    (loop for item in list
+          if (gethash item seen)
+            return item
+          do (setf (gethash item seen) t))))
 
-(defmacro defexpander (sym)
-  "Define an expander represented by the symbol SYM.
-If used at top level the expander will be defined at compile time."
-  (check-type sym symbol)
-  (with-gensyms (docstring sym-obj doc-type)
-    `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (setf (get ',sym +expander-prop+) (gensym ,(symbol-name sym)))
+(defun check-lambda-list-variables (lambda-obj lambda-list)
+  "Check lambda list variables correctness"
+  (when-let ((duplicate (first-duplicate (ecclesia:lambda-list-variables lambda-obj))))
+    (error "The variable ~s occurs more than once in the lambda list:~%~s" duplicate lambda-list)))
 
-       (defmethod (setf documentation) (,docstring ,sym-obj (,doc-type (eql ',sym)))
-         (declare (ignore ,doc-type))
-         (setf (documentation (get ,sym-obj (get ',sym +expander-prop+)) 'function) ,docstring))
+(defun destructure-macro-lambda-list (lambda-list var &optional name env)
+  "Return the code to destructure a macro lambda list"
+  (let* ((lambda-obj (ecclesia:parse-macro-lambda-list lambda-list))
+         (whole-var (ecclesia:whole lambda-obj))
+         (env-var (ecclesia:environment lambda-obj)))
+    (check-lambda-list-variables lambda-obj lambda-list)
+    (setf (ecclesia:whole lambda-obj) :none)
+    (multiple-value-bind (bindings ignoring) (ecclesia:destructure-lambda-list lambda-obj var)
+      (unless (eq env-var :none)
+        (push (list env-var env) bindings))
+      (unless (eq whole-var :none)
+        (push (list whole-var (if name `(cons ',name ,var) var)) bindings))
+      (values bindings ignoring))))
 
-       (defmethod documentation (,sym-obj (,doc-type (eql ',sym)))
-         (declare (ignore ,doc-type))
-         (documentation (get ,sym-obj (get ',sym +expander-prop+)) 'function))
+(defclass expander ()
+  ((expansions :initform (make-vault) :reader expander-expansions)))
 
-       ',sym)))
+(defun make-expander ()
+  "Make an expander"
+  (make-instance 'expander))
 
-(defun expanderp (sym)
-  "Check if a symbol denotes an expander."
-  (check-type sym symbol)
-  (and (get sym +expander-prop+) t))
+(defun expanderp (obj)
+  "Check if an object is an expander"
+  (typep obj 'expander))
 
-(defmacro defexpansion (expander name (&rest args) &body body)
-  "Define an expansion for the expander EXPANDER. If used at top level the expansion will be defined at
-compile time. NAME must be a symbol denoting the new expansion. ARGS is a destructuring lambda list.
-The &whole argument can be supplied to bind a list with all the arguments.
-DEFEXPANSION must return the desired expansion for NAME and EXPANDER."
-  (assert (expanderp expander))
+(defun expansionp (expander name)
+  "Retrieve the expansion function named NAME from EXPANDER. Return NIL if that function does not exist."
+  (check-type expander expander)
   (check-type name symbol)
-  (multiple-value-bind (actual-body declarations docstring) (parse-body body :documentation t)
-    (with-gensyms (pre-args-sym)
-      `(eval-when (:compile-toplevel :load-toplevel :execute)
-         (setf (get ',name (get ',expander +expander-prop+))
-               (lambda (&rest ,pre-args-sym)
-                 ,@(when docstring `(,docstring))
-                 (destructuring-bind (,@args) ,pre-args-sym
-                   ,@declarations
-                   ,@actual-body)))
-         ',name))))
+  (and (vault-function (expander-expansions expander) name) t))
 
-(defun expansionp (expander expansion)
-  "Check if EXPANSION is a valid expansion for EXPANDER."
-  (check-type expander symbol)
-  (assert (expanderp expander) (expander) "~s is not a valid expander." expander)
-  (check-type expansion symbol)
-  (let* ((default (gensym "DEFAULT"))
-         (value (get expansion (get expander +expander-prop+) default)))
-    (not (eq value default))))
+(defmacro defexpansion (expander name macro-lambda-list &body body)
+  "Define an expansion named NAME for EXPANDER. Arguments are specified in a macro-lambda-list where
+&whole and &environment can be used."
+  (with-gensyms (form-sym env-sym)
+    (multiple-value-bind (bindings ignoring)
+        (destructure-macro-lambda-list macro-lambda-list form-sym name env-sym)
+      (multiple-value-bind (actual-body declarations docstring)
+          (parse-body body :documentation t)
+        `(vault-defun (expander-expansions ,expander) ,name (,form-sym &optional ,env-sym)
+           (declare (ignorable ,env-sym))
+           ,@(when docstring `(,docstring))
+           (let* ,bindings
+             (declare (ignore ,@ignoring))
+             ,@(when declarations `(,@declarations))
+             ,@actual-body))))))
 
 
-(defun expand (expander expansion &rest args)
-  "Expand an EXPANSION from EXPANDER."
-  (assert (expanderp expander) (expander) "~s is not a valid expander." expander)
-  (assert (expansionp expander expansion) (expansion) "~s is not a valid expansion for the expader ~s" expansion expander)
-  (apply (get expansion (get expander +expander-prop+)) args))
+(defun expand (expander expr &optional env)
+  "Expand an EXPANSION from EXPANDER. An environment object can be supplied."
+  (check-type expander expander)
+  (check-type expr list)
+  (let ((expansion (car expr))
+        (args (cdr expr)))
+    (assert (expansionp expander expansion) (expansion)
+            "~s is not a valid expansion for the given expander" expansion)
+    (vault-funcall (expander-expansions expander) expansion args env)))
 
-(defun expand* (expander &rest args)
-  "Expand an expansion from EXPANDER. The first argument from ARGS must be a valid expansion.
-The last argument can be a symbol denoting the expansion (no arguments),
-or a list with the last arguments to use in the expansion.
-  Examples:
-    (expand* 'my-expander 'my-expansion)   ; No arguments
-    (expand* 'my-expander (list 'my-expansion arg1 arg2 ...))
-    (expand* 'my-expander 'my-expansion arg1 arg2 (list arg3 arg4 ...))"
-  (when (null (cdr args))
-    (setf args (cons (ensure-list (car args)) (cdr args))))
-  (apply #'expand expander (apply #'list* args)))
+(defmethod documentation ((object symbol) (doc-type expander))
+  (documentation object (expander-expansions doc-type)))
+
+(defmethod (setf documentation) (new-value (object symbol) (doc-type expander))
+  (setf (documentation object (expander-expansions doc-type)) new-value))
